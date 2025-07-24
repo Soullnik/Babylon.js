@@ -46,6 +46,7 @@ import type { MorphTarget } from "../Morph/morphTarget";
 import type { Geometry } from "./geometry";
 import { nativeOverride } from "../Misc/decorators";
 import { AbstractEngine } from "core/Engines/abstractEngine";
+import type { SpriteMap } from "../Sprites/spriteMap";
 
 function ApplyMorph(data: FloatArray, kind: string, morphTargetManager: MorphTargetManager): void {
     let getTargetData: Nullable<(target: MorphTarget) => Nullable<FloatArray>> = null;
@@ -2843,6 +2844,19 @@ export abstract class AbstractMesh extends TransformNode implements IDisposable,
      */
     public getConnectedParticleSystems(): IParticleSystem[] {
         return this._scene.particleSystems.filter((particleSystem) => particleSystem.emitter === this);
+    }
+
+    private _spriteMap: Nullable<SpriteMap> = null;
+
+    public get spriteMap(): Nullable<SpriteMap> {
+        return this._spriteMap;
+    }
+
+    public set spriteMap(value: SpriteMap) {
+        if (this._spriteMap && this._spriteMap !== value) {
+            this._spriteMap.dispose();
+        }
+        this._spriteMap = value;
     }
 }
 

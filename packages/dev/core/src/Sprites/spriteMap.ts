@@ -206,7 +206,7 @@ export class SpriteMap implements ISpriteMap {
      * @param options a basic deployment configuration
      * @param scene The Scene that the map is deployed on
      */
-    constructor(name: string, atlasJSON: ISpriteJSONAtlas, spriteSheet: Texture, options: ISpriteMapOptions, scene: Scene) {
+    constructor(name: string, atlasJSON: ISpriteJSONAtlas, spriteSheet: Texture, options: ISpriteMapOptions, scene: Scene, plane: Mesh) {
         this.name = name;
         this.sprites = [];
         this.atlasJSON = atlasJSON;
@@ -334,7 +334,8 @@ export class SpriteMap implements ISpriteMap {
         this._material.setTexture("animationMap", this._animationMap);
         this._material.setFloat("time", this._time);
 
-        this._output = CreatePlane(name + ":output", { size: 1, updatable: true }, scene);
+        this._output = plane ?? CreatePlane(name + ":output", { size: 1, updatable: true }, scene);
+        this._output.spriteMap = this;
         this._output.scaling.x = options.outputSize.x;
         this._output.scaling.y = options.outputSize.y;
         this.position = options.outputPosition;
@@ -616,6 +617,83 @@ export class SpriteMap implements ISpriteMap {
             this._material.setTextureArray("tileMap", this._tileMaps);
         };
         xhr.send();
+    }
+
+    /**
+     * Serializes the sprite map to a JSON object
+     * @param serializeTexture defines if the texture must be serialized as well
+     * @returns the JSON object
+     */
+    public serialize(serializeTexture = false): any {
+        const serializationObject: any = {};
+        serializationObject.name = this.name;
+        serializationObject.atlasJSON = this.atlasJSON;
+        serializationObject.options = this.options;
+        if (this.spriteSheet) {
+            if (serializeTexture && typeof this.spriteSheet.serialize === "function") {
+                serializationObject.spriteSheet = this.spriteSheet.serialize();
+            } else {
+                serializationObject.spriteSheetUrl = this.spriteSheet.name;
+                serializationObject.invertY = (this.spriteSheet as any)._invertY;
+            }
+        }
+        serializationObject.tileMaps = this._tileMaps.map(tm => {
+            const buf = tm._texture && tm._texture._bufferView;
+            if (!buf) return [];
+            return Array.from(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength));
+        });
+        const animBuf = this._animationMap._texture && this._animationMap._texture._bufferView;
+        serializationObject.animationMap = animBuf ? Array.from(new Uint8Array(animBuf.buffer, animBuf.byteOffset, animBuf.byteLength)) : [];
+        serializationObject.position = this.position.asArray();
+        serializationObject.rotation = this.rotation.asArray();
+        serializationObject.planeMeshId = this._output.id;
+        return serializationObject;
+    }
+
+    /**
+     * Parses a JSON object to create a new sprite map.
+     * @param parsed The JSON object to parse
+     * @param scene The scene to create the sprite map
+     * @param rootUrl The root url to use to load external dependencies like texture
+     * @returns the new sprite map
+     */
+    public static Parse(parsed: any, scene: Scene, rootUrl: string): SpriteMap {
+        let spriteSheet: Texture;
+        if (parsed.spriteSheet) {
+            spriteSheet = Texture.Parse(parsed.spriteSheet, scene, rootUrl) as Texture;
+        } else if (parsed.spriteSheetUrl) {
+            spriteSheet = new Texture(rootUrl + parsed.spriteSheetUrl, scene, false, parsed.invertY !== undefined ? parsed.invertY : true);
+        } else {
+            throw new Error("SpriteMap.Parse: No spriteSheet or spriteSheetUrl provided.");
+        }
+        // Ищем plane mesh по id
+        const plane = scene.getMeshById(parsed.planeMeshId);
+        if (!plane) {
+            throw new Error(`SpriteMap.Parse: Plane mesh with id '${parsed.planeMeshId}' not found in scene.`);
+        }
+        const map = new SpriteMap(
+            parsed.name,
+            parsed.atlasJSON,
+            spriteSheet,
+            parsed.options,
+            scene,
+            plane as Mesh
+        );
+        if (parsed.tileMaps) {
+            for (let i = 0; i < parsed.tileMaps.length; i++) {
+                map._tileMaps[i].dispose();
+                map._tileMaps[i] = map._createTileBuffer(parsed.tileMaps[i], i);
+            }
+            map._material.setTextureArray("tileMap", map._tileMaps);
+        }
+        if (parsed.animationMap) {
+            map._animationMap.dispose();
+            map._animationMap = map._createTileAnimationBuffer(new Float32Array(parsed.animationMap));
+            map._material.setTexture("animationMap", map._animationMap);
+        }
+        if (parsed.position) map.position = Vector3.FromArray(parsed.position);
+        if (parsed.rotation) map.rotation = Vector3.FromArray(parsed.rotation);
+        return map;
     }
 
     /**
