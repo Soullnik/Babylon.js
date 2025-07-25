@@ -21,10 +21,10 @@ import type { Geometry } from "../Meshes/geometry";
 import type { Light } from "../Lights/light";
 import { RuntimeError, ErrorCodes } from "../Misc/error";
 import type { ISpriteManager } from "../Sprites/spriteManager";
+import type { SpriteMap } from "../Sprites/spriteMap";
 import { RandomGUID } from "../Misc/guid";
 import { AbstractEngine } from "../Engines/abstractEngine";
 import { _FetchAsync } from "core/Misc/webRequest.fetch";
-import { SpriteMap } from "../Sprites/spriteMap";
 
 /**
  * Type used for the success callback of ImportMesh

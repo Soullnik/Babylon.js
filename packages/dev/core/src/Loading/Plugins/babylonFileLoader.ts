@@ -29,9 +29,9 @@ import { ReflectionProbe } from "../../Probes/reflectionProbe";
 import { GetClass } from "../../Misc/typeStore";
 import { Tools } from "../../Misc/tools";
 import { PostProcess } from "../../PostProcesses/postProcess";
-import { SpriteManager } from "core/Sprites/spriteManager";
-import { GetIndividualParser, Parse } from "./babylonFileParser.function";
+import { SpriteManager } from "../../Sprites/spriteManager";
 import { SpriteMap } from "../../Sprites/spriteMap";
+import { GetIndividualParser, Parse } from "./babylonFileParser.function";
 
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/naming-convention, no-var
@@ -481,7 +481,7 @@ const LoadAssetContainer = (scene: Scene, data: string, rootUrl: string, onError
         if (parsedData.spriteMaps) {
             for (let index = 0, cache = parsedData.spriteMaps.length; index < cache; index++) {
                 const parsedSpriteMap = parsedData.spriteMaps[index];
-                const spriteMap = SpriteMap.Parse(parsedSpriteMap, scene);
+                const spriteMap = SpriteMap.Parse(parsedSpriteMap, scene, rootUrl);
                 log += "\n\t\tSpriteMap " + spriteMap.name;
             }
         }

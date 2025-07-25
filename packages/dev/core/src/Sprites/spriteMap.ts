@@ -217,15 +217,15 @@ export class SpriteMap implements ISpriteMap {
          * Run through the options and set what ever defaults are needed that where not declared.
          */
         this.options = options;
-        options.stageSize = options.stageSize || new Vector2(1, 1);
-        options.outputSize = options.outputSize || options.stageSize;
-        options.outputPosition = options.outputPosition || Vector3.Zero();
-        options.outputRotation = options.outputRotation || Vector3.Zero();
-        options.layerCount = options.layerCount || 1;
-        options.maxAnimationFrames = options.maxAnimationFrames || 0;
-        options.baseTile = options.baseTile || 0;
-        options.flipU = options.flipU || false;
-        options.colorMultiply = options.colorMultiply || new Vector3(1, 1, 1);
+        options.stageSize = options.stageSize ?? new Vector2(1, 1);
+        options.outputSize = options.outputSize ?? options.stageSize;
+        options.outputPosition = options.outputPosition ?? Vector3.Zero();
+        options.outputRotation = options.outputRotation ?? Vector3.Zero();
+        options.layerCount = options.layerCount ?? 1;
+        options.maxAnimationFrames = options.maxAnimationFrames ?? 0;
+        options.baseTile = options.baseTile ?? 0;
+        options.flipU = options.flipU ?? false;
+        options.colorMultiply = options.colorMultiply ?? new Vector3(1, 1, 1);
 
         this._scene = scene;
 
@@ -333,8 +333,10 @@ export class SpriteMap implements ISpriteMap {
         this._material.setTextureArray("tileMaps", this._tileMaps);
         this._material.setTexture("animationMap", this._animationMap);
         this._material.setFloat("time", this._time);
+        this._material.doNotSerialize = true;
 
         this._output = CreatePlane(name + ":output", { size: 1, updatable: true }, scene);
+        this._output.doNotSerialize = true;
         this._output.scaling.x = options.outputSize.x;
         this._output.scaling.y = options.outputSize.y;
         this.position = options.outputPosition;
@@ -631,12 +633,20 @@ export class SpriteMap implements ISpriteMap {
                 outputRotation: this.options.outputRotation?.asArray(),
                 colorMultiply: this.options.colorMultiply?.asArray(),
             },
-            tileMaps: this._tileMaps.map((t) => Array.from(t._texture!._bufferView!)),
-            animationMap: Array.from(this._animationMap._texture!._bufferView!),
+            tileMaps: this._tileMaps.map((t) =>
+                Array.from(new Float32Array(t._texture!._bufferView!.buffer, t._texture!._bufferView!.byteOffset, t._texture!._bufferView!.byteLength / 4))
+            ),
+            animationMap: Array.from(
+                new Float32Array(
+                    this._animationMap._texture!._bufferView!.buffer,
+                    this._animationMap._texture!._bufferView!.byteOffset,
+                    this._animationMap._texture!._bufferView!.byteLength / 4
+                )
+            ),
         };
     }
 
-    public static Parse(data: any, scene: Scene): SpriteMap {
+    public static Parse(data: any, scene: Scene, rootUrl: string): SpriteMap {
         const options = { ...data.options };
 
         options.stageSize = new Vector2().fromArray(data.options.stageSize);
@@ -645,9 +655,9 @@ export class SpriteMap implements ISpriteMap {
         options.outputRotation = new Vector3().fromArray(data.options.outputRotation);
         options.colorMultiply = new Vector3().fromArray(data.options.colorMultiply);
 
-        const texture = scene.getTextureByName(data.spriteSheetName) as Texture;
+        let texture = scene.getTextureByName(data.spriteSheetName) as Texture;
         if (!texture) {
-            throw new Error(`Texture "${data.spriteSheetName}" not found in scene`);
+            texture = new Texture(rootUrl + data.spriteSheetName, scene, false);
         }
 
         const spriteMap = new SpriteMap(data.name, data.atlasJSON, texture, options, scene);
@@ -655,17 +665,17 @@ export class SpriteMap implements ISpriteMap {
         // Rebuild tileMaps
         for (let i = 0; i < data.tileMaps.length; i++) {
             const floatBuffer = new Float32Array(data.tileMaps[i]);
-            const tex = spriteMap["_createTileBuffer"](floatBuffer, i);
+            const tex = spriteMap._createTileBuffer(floatBuffer, i);
             spriteMap._tileMaps[i].dispose();
             spriteMap._tileMaps[i] = tex;
         }
 
         // Rebuild animationMap
         const animBuffer = new Float32Array(data.animationMap);
-        const animTex = spriteMap["_createTileAnimationBuffer"](animBuffer);
+        const animTex = spriteMap._createTileAnimationBuffer(animBuffer);
         spriteMap._animationMap.dispose();
         spriteMap._animationMap = animTex;
-        spriteMap["_material"].setTexture("animationMap", animTex);
+        spriteMap._material.setTexture("animationMap", animTex);
 
         // Reassign updated textures to material
         spriteMap._material.setTextureArray("tileMaps", spriteMap._tileMaps);
