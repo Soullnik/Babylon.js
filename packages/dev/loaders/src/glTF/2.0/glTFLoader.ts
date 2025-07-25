@@ -375,6 +375,7 @@ export class GLTFLoader implements IGLTFLoader {
                     transformNodes: this._getTransformNodes(),
                     geometries: this._getGeometries(),
                     spriteManagers: [],
+                    spriteMaps: [],
                 };
             });
         });

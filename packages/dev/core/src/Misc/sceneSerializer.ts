@@ -365,6 +365,13 @@ export class SceneSerializer {
             }
         }
 
+        if (scene.spriteMaps) {
+            serializationObject.spriteMaps = [];
+            for (index = 0; index < scene.spriteMaps.length; index++) {
+                serializationObject.spriteMaps.push(scene.spriteMaps[index].serialize());
+            }
+        }
+
         return serializationObject;
     }
 

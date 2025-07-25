@@ -210,7 +210,7 @@ export class SpriteMap implements ISpriteMap {
         this.name = name;
         this.sprites = [];
         this.atlasJSON = atlasJSON;
-        this.sprites = this.atlasJSON["frames"];
+        this.sprites = this.atlasJSON.frames;
         this.spriteSheet = spriteSheet;
 
         /**
@@ -616,6 +616,61 @@ export class SpriteMap implements ISpriteMap {
             this._material.setTextureArray("tileMap", this._tileMaps);
         };
         xhr.send();
+    }
+
+    public serialize(): any {
+        return {
+            name: this.name,
+            atlasJSON: this.atlasJSON,
+            spriteSheetName: this.spriteSheet.name,
+            options: {
+                ...this.options,
+                stageSize: this.options.stageSize?.asArray(),
+                outputSize: this.options.outputSize?.asArray(),
+                outputPosition: this.options.outputPosition?.asArray(),
+                outputRotation: this.options.outputRotation?.asArray(),
+                colorMultiply: this.options.colorMultiply?.asArray(),
+            },
+            tileMaps: this._tileMaps.map((t) => Array.from(t._texture!._bufferView!)),
+            animationMap: Array.from(this._animationMap._texture!._bufferView!),
+        };
+    }
+
+    public static Parse(data: any, scene: Scene): SpriteMap {
+        const options = { ...data.options };
+
+        options.stageSize = new Vector2().fromArray(data.options.stageSize);
+        options.outputSize = new Vector2().fromArray(data.options.outputSize);
+        options.outputPosition = new Vector3().fromArray(data.options.outputPosition);
+        options.outputRotation = new Vector3().fromArray(data.options.outputRotation);
+        options.colorMultiply = new Vector3().fromArray(data.options.colorMultiply);
+
+        const texture = scene.getTextureByName(data.spriteSheetName) as Texture;
+        if (!texture) {
+            throw new Error(`Texture "${data.spriteSheetName}" not found in scene`);
+        }
+
+        const spriteMap = new SpriteMap(data.name, data.atlasJSON, texture, options, scene);
+
+        // Rebuild tileMaps
+        for (let i = 0; i < data.tileMaps.length; i++) {
+            const floatBuffer = new Float32Array(data.tileMaps[i]);
+            const tex = spriteMap["_createTileBuffer"](floatBuffer, i);
+            spriteMap._tileMaps[i].dispose();
+            spriteMap._tileMaps[i] = tex;
+        }
+
+        // Rebuild animationMap
+        const animBuffer = new Float32Array(data.animationMap);
+        const animTex = spriteMap["_createTileAnimationBuffer"](animBuffer);
+        spriteMap._animationMap.dispose();
+        spriteMap._animationMap = animTex;
+        spriteMap["_material"].setTexture("animationMap", animTex);
+
+        // Reassign updated textures to material
+        spriteMap._material.setTextureArray("tileMaps", spriteMap._tileMaps);
+
+        return spriteMap;
     }
 
     /**

@@ -1893,6 +1893,7 @@ export class GLTFLoader implements IGLTFLoader {
                         transformNodes: [],
                         geometries: [],
                         spriteManagers: [],
+                        spriteMaps: [],
                     });
                 },
                 onProgress,

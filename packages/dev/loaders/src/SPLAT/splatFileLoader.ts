@@ -118,6 +118,7 @@ export class SPLATFileLoader implements ISceneLoaderPluginAsync, ISceneLoaderPlu
                 geometries: [],
                 lights: [],
                 spriteManagers: [],
+                spriteMaps: [],
             };
         });
     }

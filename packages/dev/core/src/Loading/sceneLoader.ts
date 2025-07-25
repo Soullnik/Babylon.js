@@ -24,6 +24,7 @@ import type { ISpriteManager } from "../Sprites/spriteManager";
 import { RandomGUID } from "../Misc/guid";
 import { AbstractEngine } from "../Engines/abstractEngine";
 import { _FetchAsync } from "core/Misc/webRequest.fetch";
+import { SpriteMap } from "../Sprites/spriteMap";
 
 /**
  * Type used for the success callback of ImportMesh
@@ -36,7 +37,8 @@ export type SceneLoaderSuccessCallback = (
     transformNodes: TransformNode[],
     geometries: Geometry[],
     lights: Light[],
-    spriteManagers: ISpriteManager[]
+    spriteManagers: ISpriteManager[],
+    spriteMaps: SpriteMap[]
 ) => void;
 
 /**
@@ -82,6 +84,11 @@ export interface ISceneLoaderAsyncResult {
      * The array of loaded sprite managers
      */
     readonly spriteManagers: ISpriteManager[];
+
+    /**
+     * The array of loaded sprite maps
+     */
+    readonly spriteMaps: SpriteMap[];
 }
 
 /**
@@ -912,12 +919,12 @@ async function importMeshAsync(
           }
         : undefined;
 
-    const successHandler: SceneLoaderSuccessCallback = (meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers) => {
+    const successHandler: SceneLoaderSuccessCallback = (meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers, spriteMaps) => {
         scene.importedMeshesFiles.push(fileInfo.url);
 
         if (onSuccess) {
             try {
-                onSuccess(meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers);
+                onSuccess(meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers, spriteMaps);
             } catch (e) {
                 errorHandler("Error in onSuccess callback: " + e, e);
             }
@@ -945,7 +952,7 @@ async function importMeshAsync(
                 }
 
                 scene.loadingPluginName = plugin.name;
-                successHandler(meshes, particleSystems, skeletons, [], [], [], [], []);
+                successHandler(meshes, particleSystems, skeletons, [], [], [], [], [], []);
             } else {
                 const asyncedPlugin = <ISceneLoaderPluginAsync>plugin;
                 asyncedPlugin
@@ -961,7 +968,8 @@ async function importMeshAsync(
                             result.transformNodes,
                             result.geometries,
                             result.lights,
-                            result.spriteManagers
+                            result.spriteManagers,
+                            result.spriteMaps
                         );
                     })
                     // eslint-disable-next-line github/no-then
@@ -996,7 +1004,7 @@ async function importMeshAsyncCoreAsync(
                 rootUrl,
                 sceneFilename,
                 scene,
-                (meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers) => {
+                (meshes, particleSystems, skeletons, animationGroups, transformNodes, geometries, lights, spriteManagers, spriteMaps) => {
                     resolve({
                         meshes: meshes,
                         particleSystems: particleSystems,
@@ -1006,6 +1014,7 @@ async function importMeshAsyncCoreAsync(
                         geometries: geometries,
                         lights: lights,
                         spriteManagers: spriteManagers,
+                        spriteMaps: spriteMaps,
                     });
                 },
                 onProgress,

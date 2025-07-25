@@ -84,6 +84,7 @@ export class BVHFileLoader implements ISceneLoaderPluginAsync, ISceneLoaderPlugi
                 geometries: [],
                 lights: [],
                 spriteManagers: [],
+                spriteMaps: [],
             } as ISceneLoaderAsyncResult);
         } catch (e) {
             // eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors

@@ -31,6 +31,7 @@ import { Tools } from "../../Misc/tools";
 import { PostProcess } from "../../PostProcesses/postProcess";
 import { SpriteManager } from "core/Sprites/spriteManager";
 import { GetIndividualParser, Parse } from "./babylonFileParser.function";
+import { SpriteMap } from "../../Sprites/spriteMap";
 
 /** @internal */
 // eslint-disable-next-line @typescript-eslint/naming-convention, no-var
@@ -474,6 +475,14 @@ const LoadAssetContainer = (scene: Scene, data: string, rootUrl: string, onError
                 const parsedSpriteManager = parsedData.spriteManagers[index];
                 const spriteManager = SpriteManager.Parse(parsedSpriteManager, scene, rootUrl);
                 log += "\n\t\tSpriteManager " + spriteManager.name;
+            }
+        }
+
+        if (parsedData.spriteMaps) {
+            for (let index = 0, cache = parsedData.spriteMaps.length; index < cache; index++) {
+                const parsedSpriteMap = parsedData.spriteMaps[index];
+                const spriteMap = SpriteMap.Parse(parsedSpriteMap, scene);
+                log += "\n\t\tSpriteMap " + spriteMap.name;
             }
         }
 
