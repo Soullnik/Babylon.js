@@ -21,6 +21,66 @@ export class SolidParticleSystemBlock extends NodeParticleBlock {
     })
     public billboard = false;
 
+    @editableInPropertyPage("Updatable", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public updatable = true;
+
+    @editableInPropertyPage("Is Pickable", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public isPickable = false;
+
+    @editableInPropertyPage("Enable Depth Sort", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public enableDepthSort = false;
+
+    @editableInPropertyPage("Use Model Material", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public useModelMaterial = false;
+
+    @editableInPropertyPage("Enable Multi Material", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public enableMultiMaterial = false;
+
+    @editableInPropertyPage("Expandable", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public expandable = false;
+
+    @editableInPropertyPage("Particle Intersection", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public particleIntersection = false;
+
+    @editableInPropertyPage("Bounding Sphere Only", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public boundingSphereOnly = false;
+
+    @editableInPropertyPage("Compute Bounding Box", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public computeBoundingBox = false;
+
+    @editableInPropertyPage("Auto Fix Face Orientation", PropertyTypeForEdition.Boolean, "ADVANCED", {
+        embedded: true,
+        notifiers: { rebuild: true },
+    })
+    public autoFixFaceOrientation = false;
+
     public _internalId = SolidParticleSystemBlock._IdCounter++;
 
     public constructor(name: string) {
@@ -57,8 +117,19 @@ export class SolidParticleSystemBlock extends NodeParticleBlock {
             throw new Error("No solid particle configuration connected to SolidParticleSystemBlock");
         }
 
-        // Create the SPS
-        const sps = new SolidParticleSystem(this.name, state.scene);
+        // Create the SPS with options
+        const sps = new SolidParticleSystem(this.name, state.scene, {
+            updatable: this.updatable,
+            isPickable: this.isPickable,
+            enableDepthSort: this.enableDepthSort,
+            useModelMaterial: this.useModelMaterial,
+            enableMultiMaterial: this.enableMultiMaterial,
+            expandable: this.expandable,
+            particleIntersection: this.particleIntersection,
+            boundingSphereOnly: this.boundingSphereOnly,
+            computeBoundingBox: this.computeBoundingBox,
+            autoFixFaceOrientation: this.autoFixFaceOrientation,
+        });
 
         const createBlocks = new Map<number, ISolidParticleInitData>();
         // Support both single particle config and array of configs
@@ -179,12 +250,32 @@ export class SolidParticleSystemBlock extends NodeParticleBlock {
     public override serialize(): any {
         const serializationObject = super.serialize();
         serializationObject.billboard = this.billboard;
+        serializationObject.updatable = this.updatable;
+        serializationObject.isPickable = this.isPickable;
+        serializationObject.enableDepthSort = this.enableDepthSort;
+        serializationObject.useModelMaterial = this.useModelMaterial;
+        serializationObject.enableMultiMaterial = this.enableMultiMaterial;
+        serializationObject.expandable = this.expandable;
+        serializationObject.particleIntersection = this.particleIntersection;
+        serializationObject.boundingSphereOnly = this.boundingSphereOnly;
+        serializationObject.computeBoundingBox = this.computeBoundingBox;
+        serializationObject.autoFixFaceOrientation = this.autoFixFaceOrientation;
         return serializationObject;
     }
 
     public override _deserialize(serializationObject: any) {
         super._deserialize(serializationObject);
         this.billboard = !!serializationObject.billboard;
+        this.updatable = serializationObject.updatable !== undefined ? !!serializationObject.updatable : true;
+        this.isPickable = !!serializationObject.isPickable;
+        this.enableDepthSort = !!serializationObject.enableDepthSort;
+        this.useModelMaterial = !!serializationObject.useModelMaterial;
+        this.enableMultiMaterial = !!serializationObject.enableMultiMaterial;
+        this.expandable = !!serializationObject.expandable;
+        this.particleIntersection = !!serializationObject.particleIntersection;
+        this.boundingSphereOnly = !!serializationObject.boundingSphereOnly;
+        this.computeBoundingBox = !!serializationObject.computeBoundingBox;
+        this.autoFixFaceOrientation = !!serializationObject.autoFixFaceOrientation;
     }
 }
 
